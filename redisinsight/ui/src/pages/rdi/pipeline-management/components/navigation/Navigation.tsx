@@ -31,7 +31,7 @@ const Navigation = () => {
   const [selectedTab, setSelectedTab] =
     useState<Nullable<RdiPipelineTabs>>(null)
 
-  const { loading, changes, configValidationErrors } =
+  const { loading, changes, configValidationErrors, desiredPipeline, config } =
     useSelector(rdiPipelineSelector)
   const history = useHistory()
   const { pathname } = useLocation()
@@ -53,6 +53,14 @@ const Navigation = () => {
     setSelectedTab(activeTab)
   }, [pathname, rdiInstanceId])
 
+  let fileState: React.ComponentProps<typeof Tab>['fileState'] = 'default'
+  if (config && desiredPipeline?.config && config !== desiredPipeline.config) {
+    fileState = 'modified'
+  }
+  if (!config && desiredPipeline?.config) {
+    fileState = 'added'
+  }
+
   const renderTabs = () => (
     <>
       <div
@@ -66,6 +74,7 @@ const Navigation = () => {
         <Tab
           title="Configure pipeline"
           fileName="Configuration file"
+          fileState={fileState}
           isSelected={selectedTab === RdiPipelineTabs.Config}
           data-testid={`rdi-pipeline-tab-${RdiPipelineTabs.Config}`}
           isLoading={loading}
