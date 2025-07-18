@@ -49,6 +49,7 @@ export interface CommonProps {
   onAcceptChanges?: () => void
   onRejectChanges?: () => void
   showAcceptReject?: boolean
+  hideDiffViewToggle?: boolean
   'data-testid'?: string
 }
 
@@ -97,6 +98,7 @@ const MonacoEditor = (props: Props) => {
     onAcceptChanges,
     onRejectChanges,
     showAcceptReject = false,
+    hideDiffViewToggle = false,
     'data-testid': dataTestId = 'monaco-editor',
   } = props
 
@@ -342,17 +344,19 @@ const MonacoEditor = (props: Props) => {
               >
                 Reject
               </EuiButton>
-              <EuiButton
-                size="s"
-                onClick={toggleDiffViewMode}
-                iconType={isInlineDiff ? 'menuLeft' : 'menuRight'}
-                className={styles.diffViewToggleBtn}
-                data-testid="diff-view-toggle"
-                style={{ marginLeft: '8px' }}
-                title={isInlineDiff ? 'Switch to side-by-side view' : 'Switch to inline view'}
-              >
-                {isInlineDiff ? 'Inline' : 'Side-by-Side'}
-              </EuiButton>
+              {!hideDiffViewToggle && (
+                <EuiButton
+                  size="s"
+                  onClick={toggleDiffViewMode}
+                  iconType={isInlineDiff ? 'menuLeft' : 'menuRight'}
+                  className={styles.diffViewToggleBtn}
+                  data-testid="diff-view-toggle"
+                  style={{ marginLeft: '8px' }}
+                  title={isInlineDiff ? 'Switch to side-by-side view' : 'Switch to inline view'}
+                >
+                  {isInlineDiff ? 'Inline' : 'Side-by-Side'}
+                </EuiButton>
+              )}
             </div>
           )}
           {/* Legacy diff toggle for non-AI diffs */}

@@ -100,18 +100,24 @@ const Job = (props: Props) => {
   const isModifiedJob = jobIndex !== -1 && !!desiredJob && value !== desiredJob.value
   
   const isDesiredDiff = Boolean(isNewlyAddedJob || isModifiedJob)
-  const desiredValue = desiredJob?.value || value || ''
+  
+  // For display in Monaco editor:
+  // - For newly added jobs: show desired content with empty original
+  // - For modified jobs: show desired content with current content as original  
+  // - For unchanged jobs: show current content
+  const editorValue = isNewlyAddedJob || isModifiedJob ? (desiredJob?.value || '') : (value || '')
+  const editorOriginalValue = isNewlyAddedJob ? '' : (isModifiedJob ? value : (jobDiff.originalValue || undefined))
 
   // Enable diff mode when desired state changes
   useEffect(() => {
     if (isDesiredDiff && desiredJob) {
       dispatch(enableJobDiff({
         jobName: name,
-        originalValue: isNewlyAddedJob ? '' : value,
+        originalValue: editorOriginalValue || '',
         newValue: desiredJob.value
       }))
     }
-  }, [isDesiredDiff, desiredJob, name, value, isNewlyAddedJob])
+  }, [isDesiredDiff, desiredJob, name, editorOriginalValue])
 
   const handleDryRunJob = () => {
     const JSONValue = yamlToJson(value, (msg) => {
@@ -304,8 +310,8 @@ const Job = (props: Props) => {
         ) : (
           <MonacoYaml
             schema={get(schema, 'jobs', null)}
-            value={desiredValue}
-            originalValue={isNewlyAddedJob ? '' : (jobDiff.originalValue || undefined)}
+            value={editorValue}
+            originalValue={editorOriginalValue}
             enableDiff={jobDiff.enabled || isDesiredDiff}
             onDiffModeChange={handleDiffModeChange}
             onChange={handleChange}
@@ -326,6 +332,12 @@ const Job = (props: Props) => {
             showAcceptReject={isDesiredDiff}
             onAcceptChanges={handleAcceptChanges}
             onRejectChanges={handleRejectChanges}
+            diffOptions={{
+              renderSideBySide: !isNewlyAddedJob, // Force inline mode for newly added jobs
+              enableSplitViewResizing: !isNewlyAddedJob,
+              ignoreTrimWhitespace: true,
+            }}
+            hideDiffViewToggle={isNewlyAddedJob} // Hide the inline/side-by-side toggle for newly added jobs
             data-testid="rdi-monaco-job"
           />
         )}
