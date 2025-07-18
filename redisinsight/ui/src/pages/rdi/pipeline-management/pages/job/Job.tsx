@@ -91,20 +91,27 @@ const Job = (props: Props) => {
   const jobDiff = diff.jobs[name] || { enabled: false, originalValue: null }
 
   // Check if this job has a desired state
-  const desiredJob = desiredPipeline.active && desiredPipeline.jobs.find(job => job.name === name)
-  const isDesiredDiff = Boolean(desiredJob && value !== desiredJob.value)
-  const desiredValue = ((desiredJob as any)?.value || jobDiff.enabled && jobDiff.newValue ? jobDiff.newValue : value) ?? ''
+  const desiredJob = desiredPipeline.active ? desiredPipeline.jobs.find(job => job.name === name) : null
+  
+  // For newly added jobs: jobIndex === -1 means job doesn't exist in current jobs array
+  const isNewlyAddedJob = jobIndex === -1 && !!desiredJob
+  
+  // For modified jobs: job exists in both places but with different content
+  const isModifiedJob = jobIndex !== -1 && !!desiredJob && value !== desiredJob.value
+  
+  const isDesiredDiff = Boolean(isNewlyAddedJob || isModifiedJob)
+  const desiredValue = desiredJob?.value || value || ''
 
   // Enable diff mode when desired state changes
   useEffect(() => {
     if (isDesiredDiff && desiredJob) {
       dispatch(enableJobDiff({
         jobName: name,
-        originalValue: value,
+        originalValue: isNewlyAddedJob ? '' : value,
         newValue: desiredJob.value
       }))
     }
-  }, [isDesiredDiff, desiredJob, name, value])
+  }, [isDesiredDiff, desiredJob, name, value, isNewlyAddedJob])
 
   const handleDryRunJob = () => {
     const JSONValue = yamlToJson(value, (msg) => {
@@ -298,7 +305,7 @@ const Job = (props: Props) => {
           <MonacoYaml
             schema={get(schema, 'jobs', null)}
             value={desiredValue}
-            originalValue={jobDiff.originalValue || undefined}
+            originalValue={isNewlyAddedJob ? '' : (jobDiff.originalValue || undefined)}
             enableDiff={jobDiff.enabled || isDesiredDiff}
             onDiffModeChange={handleDiffModeChange}
             onChange={handleChange}

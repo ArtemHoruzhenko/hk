@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { useHistory, useParams } from 'react-router-dom'
-import { useFormikContext } from 'formik'
 import { findIndex } from 'lodash'
 
 import { sendPageViewTelemetry, TelemetryPageView } from 'uiSrc/telemetry'
-import { rdiPipelineSelector, setPipeline } from 'uiSrc/slices/rdi/pipeline'
-import { IPipeline } from 'uiSrc/slices/interfaces'
+import { rdiPipelineSelector } from 'uiSrc/slices/rdi/pipeline'
 import { Pages } from 'uiSrc/constants'
-import { convertTimestampToMilliseconds, Maybe } from 'uiSrc/utils'
+import { Maybe } from 'uiSrc/utils'
 import Job from './Job'
 
 const JobWrapper = () => {
@@ -25,16 +23,27 @@ const JobWrapper = () => {
 
   const history = useHistory()
 
-  const { data, jobs } = useSelector(rdiPipelineSelector)
+  const rdiPipelineState = useSelector(rdiPipelineSelector)
+  const { data, jobs, loading } = rdiPipelineState
+  const {desiredPipeline} = rdiPipelineState as any
 
   useEffect(() => {
+    // Don't redirect while still loading data
+    if (loading) return
+
     const jobIndex = findIndex(jobs, ({ name }) => name === decodedJobName)
     setJobIndex(jobIndex)
 
+    // If job not found in current jobs, check if it exists in desired pipeline
     if (jobIndex === -1) {
-      history.push(Pages.rdiPipelineConfig(rdiInstanceId))
+      const desiredJobExists = desiredPipeline?.jobs?.some((job: any) => job.name === decodedJobName)
+      
+      if (!desiredJobExists) {
+        // Only redirect if job doesn't exist in either current or desired state
+        history.push(Pages.rdiPipelineConfig(rdiInstanceId))
+      }
     }
-  }, [decodedJobName, rdiInstanceId, jobs?.length])
+  }, [decodedJobName, rdiInstanceId, jobs?.length, desiredPipeline?.jobs, loading])
 
   useEffect(() => {
     setDecodedJobName(decodeURIComponent(jobName))
@@ -55,10 +64,21 @@ const JobWrapper = () => {
     setDeployedJobValue(newDeployedJob ? newDeployedJob.value : undefined)
   }, [data, decodedJobName])
 
+  // Get job value from current jobs or desired pipeline
+  const getJobValue = () => {
+    if (jobIndex !== -1) {
+      return jobs[jobIndex]?.value ?? ''
+    }
+    
+    // If job doesn't exist in current jobs, try to get it from desired pipeline
+    const desiredJob = desiredPipeline?.jobs?.find((job: any) => job.name === decodedJobName)
+    return desiredJob?.value ?? ''
+  }
+
   return (
     <Job
       name={decodedJobName}
-      value={jobs[jobIndex]?.value ?? ''}
+      value={getJobValue()}
       deployedJobValue={deployedJobValue}
       jobIndex={jobIndex}
       rdiInstanceId={rdiInstanceId}
