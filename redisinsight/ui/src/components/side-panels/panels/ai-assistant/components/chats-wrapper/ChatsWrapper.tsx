@@ -103,24 +103,24 @@ const ChatsWrapper = () => {
                   Data Generator
               </EuiTab>
             )}
-            {/* {documentationChatFeature?.flag && ( */}
-            {/*  <EuiTab */}
-            {/*    isSelected={activeTab === AiChatType.Assistance} */}
-            {/*    onClick={() => selectTab(AiChatType.Assistance)} */}
-            {/*    data-testid="ai-general-chat_tab" */}
-            {/*  > */}
-            {/*    General */}
-            {/*  </EuiTab> */}
-            {/* )} */}
-            {/* {databaseChatFeature?.flag && ( */}
-            {/*  <EuiTab */}
-            {/*    isSelected={activeTab === AiChatType.Query} */}
-            {/*    onClick={() => selectTab(AiChatType.Query)} */}
-            {/*    data-testid="ai-database-chat_tab" */}
-            {/*  > */}
-            {/*    My Data */}
-            {/*  </EuiTab> */}
-            {/* )} */}
+            {documentationChatFeature?.flag && (
+             <EuiTab
+               isSelected={activeTab === AiChatType.Assistance}
+               onClick={() => selectTab(AiChatType.Assistance)}
+               data-testid="ai-general-chat_tab"
+             >
+               General
+             </EuiTab>
+            )}
+            {databaseChatFeature?.flag && !isOnRdiPipelineConfig && (
+             <EuiTab
+               isSelected={activeTab === AiChatType.Query}
+               onClick={() => selectTab(AiChatType.Query)}
+               data-testid="ai-database-chat_tab"
+             >
+               My Data
+             </EuiTab>
+            )}
           </EuiTabs>
         </div>
       )}
